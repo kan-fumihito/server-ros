@@ -43,7 +43,8 @@ wsRos.on("connection", function(ws) {
 function changeNow() {
     if (wsList.length > 0) {
         wsIdx = (wsIdx + 1) % wsList.length;
-        wsNow = wsList.indexOf(wsIdx);
+        wsNow = wsList[wsIdx];
+
         wsNow.send("You");
     }
 }
