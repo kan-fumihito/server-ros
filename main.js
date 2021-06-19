@@ -14,6 +14,8 @@ wsUser.on("connection", function(ws) {
     if (wsNow == null) {
         wsNow = ws;
         ws.send("You");
+    } else {
+        ws.send("Pause");
     }
     ws.on("message", function(msg) {
         console.log("Received: " + msg);
@@ -44,12 +46,13 @@ function changeNow() {
     if (wsList.length > 0) {
         wsIdx = (wsIdx + 1) % wsList.length;
         wsNow = wsList[wsIdx];
-
         wsNow.send("You");
-        for (var i = 0; i < wsList.length; i++) {
-            if (wsIdx != i)
-                wsList[i].send("Pause");
-        }
+
+        wsUser.clients.forEach(function(client) {
+            if (client != wsNow) {
+                client.send("Pause");
+            }
+        })
     }
 }
 setInterval(changeNow, 1000 * 10);
