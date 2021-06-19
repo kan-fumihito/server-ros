@@ -46,6 +46,10 @@ function changeNow() {
         wsNow = wsList[wsIdx];
 
         wsNow.send("You");
+        for (var i = 0; i < wsList.length; i++) {
+            if (wsIdx != i)
+                wsList[i].send("Pause");
+        }
     }
 }
 setInterval(changeNow, 1000 * 10);
