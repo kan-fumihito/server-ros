@@ -38,7 +38,8 @@ wsRos.on("connection", function(ws) {
         console.log("Close ROS");
     });
     ws.on("message", function(msg) {
-        console.log(msg);
+        //console.log(msg);
+
         wsUser.clients.forEach(function(client) {
             client.send(msg);
         });
