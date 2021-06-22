@@ -39,6 +39,9 @@ wsRos.on("connection", function(ws) {
     });
     ws.on("message", function(msg) {
         console.log(msg);
+        wsUser.clients.forEach(function(client) {
+            client.send(msg);
+        });
     })
 });
 
