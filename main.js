@@ -1,11 +1,11 @@
 const WebSocket = require("ws");
 
-// ブラウザから受け取るだけ
+// ユーザ(ブラウザ)側
 const wsUser = new WebSocket.Server({ port: 8080 });
 var wsList = [];
 var wsNow = null;
 var wsIdx = 0;
-// Rosに送るだけ
+// ROS(Jetson)側
 const wsRos = new WebSocket.Server({ port: 9090 });
 
 wsUser.on("connection", function(ws) {
@@ -13,10 +13,13 @@ wsUser.on("connection", function(ws) {
     wsList.push(ws);
     if (wsNow == null) {
         wsNow = ws;
+        wsIdx = 0;
         ws.send("You");
     } else {
         ws.send("Pause");
     }
+
+    // ユーザからメッセージが届いた
     ws.on("message", function(msg) {
         console.log("Received: " + msg);
         if (ws == wsNow) {
@@ -26,26 +29,39 @@ wsUser.on("connection", function(ws) {
             });
         }
     });
+    // ユーザが切断した
     ws.on("close", function() {
         console.log("Close User");
         wsList.pop(ws);
+        if (wsList.length == 0) {
+            wsNow = null;
+        } else if (ws == wsNow) {
+            wsIdx -= 1;
+            changeNow();
+        } else {
+            if (wsList.indexOf(wsNow) < wsIdx) {
+                wsIdx -= 1;
+            }
+        }
     });
 });
 
 wsRos.on("connection", function(ws) {
     console.log("Open ROS");
-    ws.on("close", function() {
-        console.log("Close ROS");
-    });
-    ws.on("message", function(msg) {
-        //console.log(msg);
 
+    // ROSからメッセージが届いた
+    ws.on("message", function(msg) {
         wsUser.clients.forEach(function(client) {
             client.send(msg);
         });
-    })
+    });
+    // client-rosが切断された
+    ws.on("close", function() {
+        console.log("Close ROS");
+    });
 });
 
+// ユーザの操作権の交替
 function changeNow() {
     if (wsList.length > 0) {
         wsIdx = (wsIdx + 1) % wsList.length;
@@ -56,7 +72,7 @@ function changeNow() {
             if (client != wsNow) {
                 client.send("Pause");
             }
-        })
+        });
     }
 }
 setInterval(changeNow, 1000 * 10);
